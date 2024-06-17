@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hồ Sơ Nhân Viên</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .employee-info {
+            margin-bottom: 20px;
+        }
+
+        .employee-info label {
+            font-weight: bold;
+        }
+
+        .employee-info p {
+            margin: 5px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th, td {
+            padding: 8px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+        button{
+         `  padding: 40px 80px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }`
+    </style>
+</head>
+<body>
+<form action="/backHoSo" method="GET">
+    <button type="submit">Trở về</button>
+</form>
+<div class="container">
+    <h1>Hồ Sơ Nhân Viên</h1>
+    <div class="employee-info" id="employee-info">
+        <!-- Thông tin nhân viên sẽ được hiển thị ở đây -->
+    </div>
+    <h2>Lịch sử không nhận bảng chấm công</h2>
+    <table id="history-table">
+        <thead>
+        <tr>
+            <th>Số thứ tự</th>
+            <th>ID</th>
+            <th>Bình luận</th>
+            <th>ID nhân viên</th>
+            <!-- Thêm các cột khác tùy thuộc vào thông tin bạn muốn hiển thị -->
+        </tr>
+        </thead>
+        <tbody id="history-body">
+        <!-- Dữ liệu lịch sử nhận dạng sẽ được hiển thị ở đây -->
+        </tbody>
+    </table>
+</div>
+
+<script>
+    function getEmployeeInfoFromApi() {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', '/api/employee', true);
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === XMLHttpRequest.DONE) {
+                if (xhr.status === 200) {
+                    var employee = JSON.parse(xhr.responseText);
+                    displayEmployeeInfo(employee);
+                    getEmployeeHistoryFromApi(employee.id);
+                } else {
+                    console.error('Failed to fetch employee info. Status: ' + xhr.status);
+                }
+            }
+        };
+        xhr.send();
+    }
+
+    function displayEmployeeInfo(employee) {
+        var employeeInfoDiv = document.getElementById('employee-info');
+        var html = '';
+        html += '<label>ID:</label><p>' + employee.id + '</p>';
+        html += '<label>Tên:</label><p>' + employee.ten + '</p>';
+        html += '<label>Email:</label><p>' + employee.email + '</p>';
+        html += '<label>Tài khoản:</label><p>' + employee.taiKhoan + '</p>';
+        html += '<label>Vị trí:</label><p>' + employee.viTri + '</p>';
+        employeeInfoDiv.innerHTML = html;
+    }
+
+    function getEmployeeHistoryFromApi(employeeId) {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', '/api/employee/history', true);
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === XMLHttpRequest.DONE) {
+                if (xhr.status === 200) {
+                    var history = JSON.parse(xhr.responseText);
+                    displayEmployeeHistory(history);
+                } else {
+                    console.error('Failed to fetch employee history. Status: ' + xhr.status);
+                }
+            }
+        };
+        xhr.send();
+    }
+
+    function displayEmployeeHistory(history) {
+        var historyBody = document.getElementById('history-body');
+        var html = '';
+        history.forEach(function(item, index) {
+            html += '<tr>';
+            html += '<td>' + (index + 1) + '</td>';
+            html += '<td>' + item.id + '</td>';
+            html += '<td>' + item.binhLuan + '</td>';
+            html += '<td>' + item.nhanVien.id + '</td>';
+            // Thêm các cột khác tùy thuộc vào thông tin bạn muốn hiển thị
+            html += '</tr>';
+        });
+        historyBody.innerHTML = html;
+    }
+
+    // Gọi hàm để lấy và hiển thị thông tin nhân viên từ API khi trang được tải
+    window.onload = function() {
+        getEmployeeInfoFromApi();
+    };
+</script>
+</body>
+</html>

@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bảng chấm công</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        form {
+            text-align: center;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        input[type="text"],
+        input[type="password"],
+        input[type="date"],
+        input[type="number"] {
+            width: calc(100% - 20px);
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        table th, table td {
+            padding: 10px;
+            border: 1px solid #ccc;
+            text-align: center;
+        }
+
+        tfoot td {
+            font-weight: bold;
+        }
+
+        button{
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button[type="submit"]:hover {
+            background-color: #0056b3;
+        }
+                .notification-icon {
+            font-size: 24px;
+            cursor: pointer;
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #555;
+        }
+
+        .notification-icon .badge {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            background: red;
+            color: white;
+            border-radius: 50%;
+            padding: 5px 10px;
+        }
+
+        .notification-popup {
+            display: none;
+            position: fixed;
+            left: 20px;
+            top: 60px;
+            background: white;
+            border: 1px solid #ccc;
+            padding: 10px;
+            width: 300px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+            z-index: 10;
+        }
+
+        .notification-popup ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .notification-popup ul li {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            color: #555;
+        }
+
+        .notification-popup ul li:last-child {
+            border-bottom: none;
+        }
+
+        .notification-popup ul li:hover {
+            background-color: #f4f4f4;
+        }
+
+    </style>
+    <script>
+        function updateTotals() {
+            var totalHours = 0;
+            var totalOvertime = 0;
+            var hourInputs = document.querySelectorAll('.hour-input');
+            var overtimeInputs = document.querySelectorAll('.overtime-input');
+
+            hourInputs.forEach(function(input) {
+                totalHours += parseInt(input.value) || 0;
+            });
+
+            overtimeInputs.forEach(function(input) {
+                totalOvertime += parseInt(input.value) || 0;
+            });
+
+            var total = totalHours + totalOvertime; // Tổng mới
+
+            document.getElementById('total').textContent = total; // Sửa id của ô tổng cộng
+        }
+
+        function submitForm() {
+            var idNhanVien = document.getElementById("idNhanVien").value;
+            var idQuanLi = document.getElementById("idQuanLi").value;
+            var startDate = document.getElementById("startDate").value;
+
+            var thoiGianBieuDTOs = [];
+
+            var tableRows = document.querySelectorAll("#tableBody tr");
+            tableRows.forEach(function(row) {
+                var cells = row.querySelectorAll("td");
+                var gioDaGhi = cells[2].querySelector("input").value;
+
+                // Kiểm tra giá trị của gioDaGhi
+                if (gioDaGhi !== "" && gioDaGhi !== "0") {
+                    var thoiGianBieuDTO = {
+                        "nhanVien": {
+                            "id": idNhanVien
+                        },
+                        "quanLi": {
+                            "id": idQuanLi
+                        },
+                        "ngay": cells[1].querySelector("input").value,
+                        "gioDaGhi": gioDaGhi,
+                        "gioTangCa": cells[3].querySelector("input").value,
+                        "uyQuyen": {
+                            "id": cells[4].querySelector("input").value
+                        },
+                        "hoaDon": {
+                            "id": cells[5].querySelector("input").value
+                        }
+                    };
+                    console.log(thoiGianBieuDTO);
+                    thoiGianBieuDTOs.push(thoiGianBieuDTO);
+                }
+            });
+
+            // Gửi dữ liệu lên REST API
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", "/api/thoiGianBieu", true);
+            xhr.setRequestHeader("Content-Type", "application/json;charset=UTF-8");
+            xhr.onreadystatechange = function () {
+                var xacThuc = xhr.responseText;
+
+                alert(xacThuc);
+
+            };
+            xhr.send(JSON.stringify(thoiGianBieuDTOs));
+        }
+    </script>
+</head>
+<body>
+<button class="back-button" onclick="window.location.href='/hoSo'">Hồ Sơ</button>
+<div class="notification-icon" onclick="toggleNotifications()">
+    <i class="fa fa-bell"></i>
+    <span class="badge" id="notification-count">0</span>
+</div>
+<div class="notification-popup" id="notification-popup">
+    <ul id="notification-list">
+        <!-- Notifications will be added here -->
+    </ul>
+</div>
+<h2>Bảng chấm công</h2>
+<div>
+    <label for="idNhanVien">Mã nhân viên:</label>
+    <input type="text" id="idNhanVien" name="idNhanVien">
+    <label for="idQuanLi">Mã quản lí:</label>
+    <input type="text" id="idQuanLi" name="idQuanLi">
+    <label for="startDate">Ngày bắt đầu:</label>
+    <input type="date" id="startDate" name="startDate" onchange="setDateInputs()">
+</div>
+<table>
+    <thead>
+    <tr>
+        <th>Thứ</th>
+        <th>Ngày</th>
+        <th>Số giờ làm</th>
+        <th>Số giờ làm thêm</th>
+        <th>Ủy quyền</th>
+        <th>ID hóa đơn</th> <!-- Di chuyển cột ID hóa đơn xuống cuối bảng -->
+    </tr>
+    </thead>
+    <tbody id="tableBody">
+    <!-- JavaScript sẽ tạo các dòng này tự động -->
+    </tbody>
+    <tfoot>
+    <tr>
+        <td colspan="2">Tổng cộng</td>
+        <td id="total"></td>
+    </tr>
+    </tfoot>
+</table>
+<button type="button" onclick="submitForm()">Submit</button>
+
+<script>
+let notifications = [];
+
+        // Function to toggle notifications popup
+        function toggleNotifications() {
+            const popup = document.getElementById('notification-popup');
+            if (popup.style.display === 'block') {
+                popup.style.display = 'none';
+            } else {
+                popup.style.display = 'block';
+                // Get quan li ID and fetch notifications
+                fetchEmployee();
+            }
+        }
+
+        // Function to fetch employee info
+        function fetchEmployee() {
+            fetch("/api/employee")
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok.');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Get quan li ID
+                const quanLiId = data.id;
+                // Fetch notifications for the current quan li
+                fetchNotifications(quanLiId);
+            })
+            .catch(error => {
+                console.error('Error fetching employee info:', error);
+            });
+        }
+
+        // Function to render notifications
+        function renderNotifications() {
+            const list = document.getElementById('notification-list');
+            list.innerHTML = '';
+            notifications.forEach(notification => {
+                const li = document.createElement('li');
+                li.textContent = notification;
+                list.appendChild(li);
+            });
+            document.getElementById('notification-count').textContent = notifications.length;
+        }
+
+        // Function to fetch notifications from the server
+        function fetchNotifications(quanLiId) {
+            fetch(`/api/notifications/${quanLiId}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok.');
+                }
+                return response.json();
+            })
+            .then(data => {
+                notifications = data.map(notification => `${notification.id}: ${notification.noiDung}`);
+                renderNotifications();
+            })
+            .catch(error => {
+                console.error('Error fetching notifications:', error);
+            });
+        }
+    function formatDate(date) {
+        var year = date.getFullYear();
+        var month = (date.getMonth() + 1).toString().padStart(2, '0');
+        var day = date.getDate().toString().padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    function setDateInputs() {
+        var startDate = new Date(document.getElementById("startDate").value);
+        var tableBody = document.getElementById("tableBody");
+        tableBody.innerHTML = ""; // Xóa nội dung cũ của tbody
+        for (var i = 0; i < 7; i++) {
+            var newRow = document.createElement("tr");
+            var newDate = new Date(startDate.getTime());
+            newDate.setDate(startDate.getDate() + i);
+            var formattedDate = formatDate(newDate);
+            var dayOfWeek = newDate.toLocaleDateString("en-US", { weekday: 'long' });
+            console.log("newDate:", newDate);
+            newRow.innerHTML = `
+                <td>${dayOfWeek}</td>
+                <td><input type="text" class="date-input" value="${formattedDate}"></td>
+                <td><input type="number" class="hour-input" onchange="updateTotals()"></td>
+                <td><input type="number" class="overtime-input" onchange="updateTotals()"></td>
+                <td><input type="text" class="authorization-id"></td> <!-- Thêm cột Ủy quyền -->
+                <td><input type="text" class="bill-id"></td> <!-- Di chuyển cột ID hóa đơn xuống cuối bảng -->
+            `;
+            tableBody.appendChild(newRow);
+        }
+    }
+
+    // Gọi hàm setDateInputs() khi trang được tải lần đầu tiên
+    setDateInputs();
+</script>
+
+
+</body>
+</html>
